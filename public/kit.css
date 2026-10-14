@@ -18,6 +18,7 @@
   body { color: var(--ink); font: 400 14px/1.45 var(--ui); -webkit-tap-highlight-color: transparent; -webkit-font-smoothing: antialiased; }
   #page { position: fixed; inset: 0; width: 100%; height: 100%; display: block; transition: opacity .2s; }
   #page.fading { opacity: 0; }
+  #ghost { position: fixed; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; opacity: 0; }
   #page.can-grab { cursor: grab; } #page.grabbing { cursor: grabbing; }
 
   /* corners */

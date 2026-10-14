@@ -16,7 +16,7 @@
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="stylesheet" href="kit.css?v=1791994687">
+<link rel="stylesheet" href="kit.css?v=1791995134">
 </head>
 <body>
 <canvas id="page" role="img" aria-label="Your picture, stitched"></canvas>
@@ -664,7 +664,7 @@ function shapePath(cell, ox, oy) {
   return p;
 }
 // cloth colour, the piece's area marked with a light fill, then a dot at every hole (lined up with the stitches)
-function drawPage(ctx, w, h, cell, ox, oy, dpr, mark = true) {
+function drawPage(ctx, w, h, cell, ox, oy, dpr) {
   const L = look();
   ctx.fillStyle = L.page; ctx.fillRect(0, 0, w, h);
   Stitch.drawTexture(ctx, state.texture, state.fabric, w, h, dpr);
@@ -674,16 +674,20 @@ function drawPage(ctx, w, h, cell, ox, oy, dpr, mark = true) {
     for (let y = ((oy % st) + st) % st; y <= h; y += st) for (let x = ((ox % st) + st) % st; x <= w; x += st) { p.moveTo(x + rr, y); p.arc(x, y, rr, 0, TAU); }
     ctx.fillStyle = col; ctx.fill(p);
   }
-  // inside the piece's shape: real Aida cloth, laid on the dot paper, its holes exactly where the stitches go
-  if (mark) {
-    const shape = shapePath(cell, ox, oy), { cols, rows } = pattern, pad = cell * 1.2;
-    ctx.save(); ctx.shadowColor = 'rgba(40,28,16,.16)'; ctx.shadowBlur = 14 * dpr; ctx.shadowOffsetY = 3 * dpr;
-    ctx.fillStyle = L.page; ctx.fill(shape); ctx.restore();
-    ctx.save(); ctx.clip(shape);
-    Stitch.drawAida(ctx, L, cell, ox, oy, ox - pad, oy - pad, ox + cols * cell + pad, oy + rows * cell + pad);
-    Stitch.drawTexture(ctx, state.texture, state.fabric, w, h, dpr);
-    ctx.restore();
-  }
+}
+// the piece itself: in stitched view, real Aida cloth inside the shape (its holes exactly where the stitches go) and the stitches;
+// in chart view, the chart sheet
+function drawPiece(ctx, w, h, cell, ox, oy, dpr) {
+  const { cols, rows } = pattern;
+  if (view !== 'stitched') { const mg = 26 * dpr; ctx.save(); ctx.translate(ox - mg, oy - mg); drawChart(ctx, cell, 0, 0, cols, rows, state.chartMode, mg, { paper: false, u: dpr, label: look().on }); ctx.restore(); return; }
+  const L = look(), shape = shapePath(cell, ox, oy), pad = cell * 1.2;
+  ctx.save(); ctx.shadowColor = 'rgba(40,28,16,.16)'; ctx.shadowBlur = 14 * dpr; ctx.shadowOffsetY = 3 * dpr;
+  ctx.fillStyle = L.page; ctx.fill(shape); ctx.restore();
+  ctx.save(); ctx.clip(shape);
+  Stitch.drawAida(ctx, L, cell, ox, oy, ox - pad, oy - pad, ox + cols * cell + pad, oy + rows * cell + pad);
+  Stitch.drawTexture(ctx, state.texture, state.fabric, w, h, dpr);
+  ctx.restore();
+  drawStitched(ctx, cell, ox, oy);
 }
 
 // ---------- layout ----------
@@ -710,28 +714,50 @@ function area() {
   return { x: l, y: t, w: Math.max(80, W - l - r), h: Math.max(80, H - t - b) };
 }
 
-// the free area as drawn: it glides to a new spot when a panel opens or closes, and snaps on resize or view change
-let shownA = null, glide = null, glideFrame = 0, snapArea = false;
+// motion: when a panel opens or the shape changes, the piece glides and scales from where it was to its new place.
+// It's drawn once into a sprite, so each frame is just the dot paper plus one image.
 const calm = matchMedia('(prefers-reduced-motion: reduce)');
-const sameArea = (a, b) => ['x', 'y', 'w', 'h'].every(k => Math.abs(a[k] - b[k]) < .5);
-function drawnArea() {
-  const T = area();
-  if (!shownA || snapArea || calm.matches) { snapArea = false; glide = null; return shownA = T; }
-  if (!sameArea(glide ? glide.to : shownA, T)) glide = { from: shownA, to: T, t0: performance.now() };
-  if (!glide) return shownA;
-  const k = Math.min(1, (performance.now() - glide.t0) / 420), e = 1 - Math.pow(1 - k, 3);
-  const { from, to } = glide;
-  shownA = { x: from.x + (to.x - from.x) * e, y: from.y + (to.y - from.y) * e, w: from.w + (to.w - from.w) * e, h: from.h + (to.h - from.h) * e };
-  if (k < 1) { if (!glideFrame) glideFrame = requestAnimationFrame(() => { glideFrame = 0; render(); }); }
-  else glide = null;
-  return shownA;
+let glideNext = false, motion = null;
+const easeInOut = k => k < .5 ? 4 * k * k * k : 1 - Math.pow(2 - 2 * k, 3) / 2;
+function shown() {   // where the piece is on screen right now: its stitch size and center (css px)
+  return motion ? motion.cur : layout && { cell: layout.cell, cx: layout.cx, cy: layout.cy };
+}
+function startMotion(from, dpr) {
+  const { cols, rows } = pattern, to = layout, c = to.cell * dpr, m = Math.round(70 * dpr);
+  const sprite = document.createElement('canvas');
+  sprite.width = Math.ceil(cols * c + 2 * m); sprite.height = Math.ceil(rows * c + 2 * m);
+  const sx = sprite.getContext('2d'), x0 = to.ox * dpr, y0 = to.oy * dpr;
+  sx.translate(m - x0, m - y0); drawPiece(sx, cv.width, cv.height, c, x0, y0, dpr);
+  motion = { from, to: { cell: to.cell, cx: to.cx, cy: to.cy }, cur: from, sprite, m, dpr, cols, rows, t0: performance.now(), dur: 460 };
+  motion.raf = requestAnimationFrame(motionFrame);
+}
+function motionFrame() {
+  const M = motion; if (!M) return;
+  const k = Math.min(1, (performance.now() - M.t0) / M.dur), e = easeInOut(k), { from, to, dpr: d } = M;
+  const cur = M.cur = { cell: from.cell + (to.cell - from.cell) * e, cx: from.cx + (to.cx - from.cx) * e, cy: from.cy + (to.cy - from.cy) * e };
+  const c = cur.cell * d, x0 = cur.cx * d - M.cols * c / 2, y0 = cur.cy * d - M.rows * c / 2, sc = cur.cell / to.cell;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  drawPage(ctx, cv.width, cv.height, c, x0, y0, d);
+  ctx.drawImage(M.sprite, x0 - M.m * sc, y0 - M.m * sc, M.sprite.width * sc, M.sprite.height * sc);
+  if (k < 1) M.raf = requestAnimationFrame(motionFrame); else motion = null;
+}
+function stopMotion() { if (motion) { cancelAnimationFrame(motion.raf); motion = null; } }
+
+// a snapshot of the page that fades away over the new one (fabric and shape changes)
+const ghostCv = document.createElement('canvas');
+ghostCv.id = 'ghost'; ghostCv.setAttribute('aria-hidden', 'true'); cv.after(ghostCv);
+function ghost(ms) {
+  if (calm.matches || !pattern) return;
+  ghostCv.width = cv.width; ghostCv.height = cv.height; ghostCv.getContext('2d').drawImage(cv, 0, 0);
+  ghostCv.style.transition = 'none'; ghostCv.style.opacity = 1;
+  requestAnimationFrame(() => requestAnimationFrame(() => { ghostCv.style.transition = `opacity ${ms}ms ease`; ghostCv.style.opacity = 0; }));
 }
 
 function render() {
   if (!pattern) return;
   const { cols, rows } = pattern, dpr = Math.min(devicePixelRatio || 1, 2);
-  const W = innerWidth, H = innerHeight, A = drawnArea();
-  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+  const W = innerWidth, H = innerHeight, A = area();
+  if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
   ctx.setTransform(1, 0, 0, 1, 0, 0);
 
   const fit = Math.min(A.w / cols, A.h / rows);
@@ -743,12 +769,16 @@ function render() {
     cell = Math.max(1, fit * chartView.zoom);
     ox = A.x + (A.w - cols * cell) / 2 + chartView.px; oy = A.y + (A.h - rows * cell) / 2 + chartView.py;
   }
-  layout = { cell, ox, oy };
+  const from = shown();
+  stopMotion();
+  layout = { cell, ox, oy, cx: ox + cols * cell / 2, cy: oy + rows * cell / 2 };
   const c = cell * dpr, x0 = ox * dpr, y0 = oy * dpr;
-  drawPage(ctx, cv.width, cv.height, c, x0, y0, dpr, view === 'stitched');
-  if (view === 'stitched') {
-    drawStitched(ctx, c, x0, y0);
-    if (snap.x || snap.y) {   // a red guide through the middle while the picture is snapped there
+  const glide = glideNext && from && !calm.matches; glideNext = false;
+  if (glide) startMotion(from, dpr);
+  else {
+    drawPage(ctx, cv.width, cv.height, c, x0, y0, dpr);
+    drawPiece(ctx, cv.width, cv.height, c, x0, y0, dpr);
+    if (view === 'stitched' && (snap.x || snap.y)) {   // a red guide through the middle while the picture is snapped there
       ctx.save(); ctx.strokeStyle = '#a4462e'; ctx.lineWidth = 1.5 * dpr; ctx.setLineDash([6 * dpr, 5 * dpr]);
       const mx = x0 + cols * c / 2, my = y0 + rows * c / 2, e = 18 * dpr;
       ctx.beginPath();
@@ -757,7 +787,6 @@ function render() {
       ctx.stroke(); ctx.restore();
     }
   }
-  else { const mg = 26 * dpr; ctx.save(); ctx.translate(x0 - mg, y0 - mg); drawChart(ctx, c, 0, 0, cols, rows, state.chartMode, mg, { paper: false, u: dpr, label: look().on }); ctx.restore(); }
 
   // the label under the piece, like a card beside the work
   const { threads } = pattern, total = threads.reduce((s, t) => s + t.count, 0), w = inches(cols), h = inches(rows);
@@ -900,8 +929,8 @@ function chipGroup(host, items, key, render = it => it.label, cls = 'chip', afte
   const paint = () => btns.forEach(([b, it]) => b.setAttribute('aria-pressed', String(state[key] === it.id)));
   paint();
 }
-chipGroup($('#shapes'), SHAPES, 'shape', s => `<svg data-rough="0.6" viewBox="0 0 16 16" fill="currentColor">${s.icon}</svg>${s.label}`);
-chipGroup($('#fabrics'), FABRICS, 'fabric', f => `<span class="sw" style="background:${PAGE[f.id].page}"></span>${f.label}`, 'chip', applyLook);
+chipGroup($('#shapes'), SHAPES, 'shape', s => `<svg data-rough="0.6" viewBox="0 0 16 16" fill="currentColor">${s.icon}</svg>${s.label}`, 'chip', () => { ghost(280); glideNext = true; });
+chipGroup($('#fabrics'), FABRICS, 'fabric', f => `<span class="sw" style="background:${PAGE[f.id].page}"></span>${f.label}`, 'chip', () => { ghost(400); applyLook(); });
 chipGroup($('#counts'), [14, 16, 18].map(n => ({ id: n, label: String(n) })), 'count', it => it.label, '');
 chipGroup($('#chartModes'), [{ id: 'colour', label: 'Color' }, { id: 'symbols', label: 'Symbols' }], 'chartMode', it => it.label, '');
 
@@ -919,7 +948,7 @@ function setView(v) {
     view = v; document.body.classList.toggle('chart', v === 'chart');
     $('#threads').hidden = v !== 'chart' || (narrow() && !$('#edit').hidden);
     chartView.zoom = 1; chartView.px = chartView.py = 0;
-    snapArea = true; render(); cv.classList.remove('fading');
+    render(); cv.classList.remove('fading');
   }, 160);
 }
 viewBtns.forEach(([b, id]) => b.setAttribute('aria-pressed', String(id === view)));
@@ -951,7 +980,7 @@ $('#editBtn').addEventListener('click', () => {
   const open = $('#edit').hidden;
   $('#edit').hidden = !open; $('#editBtn').setAttribute('aria-pressed', String(open));
   if (narrow()) $('#threads').hidden = open || view !== 'chart';   // one sheet at a time on phones
-  render();
+  glideNext = true; render();
 });
 $('#pick').addEventListener('click', () => $('#file').click());
 $('#file').addEventListener('change', e => { loadFile(e.target.files[0]); setCredit(null); });
@@ -1021,7 +1050,7 @@ $('#zoomInBtn').addEventListener('click', () => zoomChartAt(1.4, innerWidth / 2,
 $('#zoomOutBtn').addEventListener('click', () => zoomChartAt(1 / 1.4, innerWidth / 2, innerHeight / 2));
 $('#zoomFit').addEventListener('click', () => { chartView.zoom = 1; chartView.px = chartView.py = 0; render(); });
 
-addEventListener('resize', () => { snapArea = true; render(); });
+addEventListener('resize', render);
 applyLook();
 Stitch.roughen();
 samplePicture();
