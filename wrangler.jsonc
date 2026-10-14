@@ -1,0 +1,6 @@
+{
+  // Static site served by a Cloudflare Worker (Workers Builds deploys on push to main).
+  "name": "sampler",
+  "compatibility_date": "2026-10-01",
+  "assets": { "directory": "./public" }
+}

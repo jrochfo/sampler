@@ -1,0 +1,1015 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Sampler · cross-stitch patterns from any picture</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cg stroke-linecap='round' stroke-width='6'%3E%3Cpath d='M9 23L23 9' stroke='%237e3420'/%3E%3Cpath d='M9 9l14 14' stroke='%23a4462e'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Hanken+Grotesk:wght@400;500;600&family=Literata:ital,opsz,wght@0,7..72,300..700;1,7..72,300..700&display=swap">
+<meta name="description" content="Sampler turns any picture into a cross-stitch pattern you can actually stitch: a chart, a list of DMC threads, and a preview of the finished piece.">
+<meta property="og:title" content="Sampler">
+<meta property="og:description" content="Cross-stitch patterns from any picture.">
+<meta property="og:url" content="https://sampler.page/">
+<meta property="og:image" content="https://sampler.page/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="kit.css?v=1791948662">
+</head>
+<body>
+<canvas id="page" role="img" aria-label="Your picture, stitched"></canvas>
+
+<div class="corner tl">
+  <div class="title-pill">
+    <button type="button" id="aboutBtn" class="title" aria-expanded="false" aria-controls="about" title="About Sampler"><span class="tt">Sampler</span></button>
+    <div class="tip" id="tip" role="tooltip">Click for help &amp; more</div>
+    <div class="label" id="label"></div>
+  </div>
+</div>
+<aside class="panel" id="about" hidden aria-label="About Sampler">
+  <h2>Sampler</h2>
+  <p>Sampler turns any picture into a cross-stitch pattern you can actually stitch, with a chart, a list of DMC threads, and a preview of the finished piece.</p>
+  <div class="sec"><h3>How to</h3>
+    <p>Add a photo, drop or paste one in, or try a sample. Drag the picture to position it inside the shape, and open <b>Edit</b> to change the shape, the number of stitches and colors, and the fabric. Switch to <b>Chart</b> to see the pattern itself, then <b>Save</b> a picture or a full PDF pattern.</p>
+    <p class="note">Your pictures never leave your computer. Everything happens right here in your browser.</p>
+  </div>
+  <div class="sec"><h3>Threads &amp; credits</h3>
+    <p class="note">Colors are matched to DMC six-strand embroidery floss. On screen they're approximations, so check them against real thread if it matters. Color data from the <a href="https://github.com/sharlagelfand/dmc" target="_blank" rel="noopener">dmc</a> package by Sharla Gelfand. Sample photos come from Wikimedia Commons and are credited as they appear. Icons are hand-drawn with <a href="https://roughjs.com" target="_blank" rel="noopener">Rough.js</a>.</p>
+    <p class="note">Made by <a href="https://jakerochford.com" target="_blank" rel="noopener">Jake Rochford</a>.</p>
+  </div>
+</aside>
+<div class="corner tr"><div class="seg" id="views" role="group" aria-label="View"></div></div>
+
+<div class="corner bl">
+  <button class="btn primary" id="pick" type="button" title="Add a photo (or drop / paste one; it never leaves your computer)">
+    <svg data-rough="1.6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span class="txt">Add a photo</span></button>
+  <button class="btn" id="sample" type="button" title="Try a sample">
+    <svg data-rough="0.7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5"/></svg><span class="txt">Sample</span></button>
+  <input type="file" id="file" accept="image/*" hidden>
+</div>
+
+<div class="bc">
+  <div class="seg zoom" role="group" aria-label="Zoom the chart">
+    <button type="button" id="zoomOutBtn" aria-label="Zoom out">−</button>
+    <button type="button" id="zoomFit">Fit</button>
+    <button type="button" id="zoomInBtn" aria-label="Zoom in">+</button>
+  </div>
+  <a id="credit" class="credit-tag" target="_blank" rel="noopener" hidden></a>
+</div>
+
+<div class="corner br">
+  <div class="menu-wrap">
+    <button class="btn" id="save" type="button" aria-haspopup="true" aria-expanded="false">
+      <svg data-rough="1.2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><span class="txt">Save</span></button>
+    <div class="menu" id="saveMenu" hidden>
+      <button type="button" id="savePic"><b>Picture</b><span>The stitched piece, as a PNG</span></button>
+      <button type="button" id="savePat"><b>Pattern</b><span>Chart, threads and supplies, as a PDF</span></button>
+    </div>
+  </div>
+  <button class="btn green" id="editBtn" type="button" aria-pressed="false" aria-controls="edit">
+    <svg data-rough="1.2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16v4zM14 6l4 4"/></svg><span class="txt">Edit</span></button>
+</div>
+
+<aside class="panel" id="edit" hidden aria-label="Edit the piece">
+  <div class="sec">
+    <h3>Picture</h3>
+    <div class="group"><div class="lbl">Shape</div><div class="chips fill" id="shapes"></div></div>
+    <div class="group">
+      <div class="lbl">Zoom <output id="zoomOut"></output></div>
+      <input type="range" id="zoom" min="1" max="8" step="0.01">
+      <p class="note">Drag the picture to move it inside the shape.</p>
+    </div>
+  </div>
+  <div class="sec">
+    <h3>Stitches</h3>
+    <div class="group"><div class="lbl">Stitches across <output id="colsOut"></output></div><input type="range" id="cols" min="20" max="160" step="1"></div>
+    <div class="group"><div class="lbl">Thread colors <output id="colorsOut"></output></div><input type="range" id="colors" min="2" max="30" step="1"></div>
+    <div class="group"><div class="lbl">Tidy stray stitches <output id="tidyOut"></output></div><input type="range" id="tidy" min="0" max="2" step="1"></div>
+  </div>
+  <div class="sec">
+    <h3>Fabric</h3>
+    <div class="chips fill" id="fabrics"></div>
+    <div class="row" title="Aida count is how many stitches fit in an inch of fabric. A higher count makes the same pattern smaller.">
+      Count <div class="seg small" id="counts" role="group" aria-label="Aida count"></div>
+    </div>
+    <label class="switch">Leave the background unstitched <input type="checkbox" id="bare" checked></label>
+  </div>
+</aside>
+
+<aside class="panel" id="threads" hidden aria-label="Threads">
+  <div class="row"><h2>Threads</h2><div class="seg small" id="chartModes" role="group" aria-label="Chart style"></div></div>
+  <table class="key" id="key"></table>
+  <p class="needs" id="needs"></p>
+  <p class="credit">Thread colors are DMC six-strand floss; on screen they're approximations. Color data from the <a href="https://github.com/sharlagelfand/dmc">dmc</a> package by Sharla Gelfand (MIT).</p>
+</aside>
+
+<div class="drop-hint">Drop your picture</div>
+
+<script>if (new URLSearchParams(location.search).has('og')) document.documentElement.classList.add('og');</script>
+<style>
+  html.og .bl, html.og .br, html.og .tr, html.og .bc, html.og #credit, html.og #tip { display: none !important; }
+  html.og .corner.tl { top: 50%; left: 56px; transform: translateY(-50%); }
+  html.og .title-pill { flex-direction: column; align-items: flex-start; height: auto; border-radius: 28px; padding: 22px 26px 24px; gap: 10px; }
+  html.og .title { border: 0; padding: 0; font-size: 64px; }
+  html.og .label { padding: 0; font: 400 22px/1.3 var(--ui); white-space: normal; max-width: 420px; }
+</style>
+<script src="dmc.js?v=1791947493"></script>
+<script src="https://cdn.jsdelivr.net/npm/roughjs@4.6.6/bundled/rough.js"></script>
+<script src="stitch.js?v=1791947765"></script>
+<script>
+(() => {
+'use strict';
+const $ = s => document.querySelector(s);
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const TAU = Math.PI * 2;
+function mulberry32(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const cellHash = (i, j, s) => { let x = Math.imul(i, 374761393) + Math.imul(j, 668265263) + Math.imul(s, 982451653) | 0; x = Math.imul(x ^ x >>> 13, 1274126177); x ^= x >>> 16; return (x >>> 0) / 4294967296; };
+const hexRgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+const rgbHex = c => '#' + c.map(v => clamp(Math.round(v), 0, 255).toString(16).padStart(2, '0')).join('');
+const mixHex = (a, b, t) => { const A = hexRgb(a), B = hexRgb(b); return rgbHex(A.map((v, i) => v + (B[i] - v) * t)); };
+const luma = h => { const c = hexRgb(h); return (.2126 * c[0] + .7152 * c[1] + .0722 * c[2]) / 255; };
+
+// ---------- colour science: compare colours the way eyes do (CIELAB) ----------
+const LIN = new Float32Array(256).map((_, i) => { const c = i / 255; return c <= .04045 ? c / 12.92 : ((c + .055) / 1.055) ** 2.4; });
+function lab(r, g, b, out = [0, 0, 0]) {
+  const R = LIN[r], G = LIN[g], B = LIN[b];
+  const f = t => t > .008856 ? Math.cbrt(t) : 7.787 * t + 16 / 116;
+  const fx = f((R * .4124 + G * .3576 + B * .1805) / .95047), fy = f(R * .2126 + G * .7152 + B * .0722), fz = f((R * .0193 + G * .1192 + B * .9505) / 1.08883);
+  out[0] = 116 * fy - 16; out[1] = 500 * (fx - fy); out[2] = 200 * (fy - fz);
+  return out;
+}
+const FLOSS = DMC.map(([num, name, hex]) => { const c = hexRgb(hex); return { num, name, hex, lab: lab(...c) }; });
+
+// ---------- state ----------
+const SHAPES = [
+  { id: 'square', label: 'Square', aspect: 1, icon: '<rect x="2" y="2" width="12" height="12" rx="1.5"/>' },
+  { id: 'portrait', label: 'Tall', aspect: 1.25, icon: '<rect x="3.5" y="1" width="9" height="14" rx="1.5"/>' },
+  { id: 'wide', label: 'Wide', aspect: .75, icon: '<rect x="1" y="3.5" width="14" height="9" rx="1.5"/>' },
+  { id: 'circle', label: 'Circle', aspect: 1, icon: '<circle cx="8" cy="8" r="6.5"/>' },
+  { id: 'oval', label: 'Oval', aspect: 1.3, icon: '<ellipse cx="8" cy="8" rx="5" ry="7"/>' },
+  { id: 'heart', label: 'Heart', aspect: .95, icon: '<path d="M8 14S1.5 9.6 1.5 5.4A3.3 3.3 0 0 1 8 4a3.3 3.3 0 0 1 6.5 1.4C14.5 9.6 8 14 8 14z"/>' },
+];
+const { FABRICS } = Stitch;
+const state = {
+  src: null, shape: 'circle', zoom: 1, cx: .5, cy: .5, cols: 80, colors: 16,
+  fabric: 'flax', texture: 'weave', count: 14, bare: true, tidy: 1, chartMode: 'colour',
+};
+let pattern = null;   // { cols, rows, grid: Int16Array (-1 = no stitch), threads: [{floss, count, symbol}] }
+
+// ---------- the picture ----------
+// frame a plate around its subject: a square with room on every side. Anything past the plate (and its scan border)
+// is filled with the plate's own paper colour, sampled just outside the subject, with the seam feathered smooth.
+function framed(img, box, plate = false) {
+  const W = img.width, H = img.height, x0 = box[0] * W, y0 = box[1] * H, x1 = box[2] * W, y1 = box[3] * H;
+  const side = Math.max(x1 - x0, y1 - y0) * 1.36, cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+  const k = Math.min(1, 1400 / side), S = Math.round(side * k);
+  // the paper: average of a thin ring just outside the subject's box
+  const src = document.createElement('canvas'); src.width = W; src.height = H;
+  const sg = src.getContext('2d'); sg.drawImage(img, 0, 0);
+  const sd = sg.getImageData(0, 0, W, H).data, m = .04, e = plate ? .06 : 0;
+  const rx0 = Math.max(W * e, x0 - W * m), rx1 = Math.min(W * (1 - e) - 1, x1 + W * m), ry0 = Math.max(H * e, y0 - H * m), ry1 = Math.min(H * (1 - e) - 1, y1 + H * m);
+  let R = 0, G = 0, B = 0, n = 0;
+  const add = (x, y) => { const q = ((y | 0) * W + (x | 0)) * 4; R += sd[q]; G += sd[q + 1]; B += sd[q + 2]; n++; };
+  for (let x = rx0; x < rx1; x += 3) { add(x, ry0); add(x, ry1 - 1); }
+  for (let y = ry0; y < ry1; y += 3) { add(rx0, y); add(rx1 - 1, y); }
+  const paper = `rgb(${R / n | 0},${G / n | 0},${B / n | 0})`;
+  // the plate, inset past its scan border, with its edges faded into the paper
+  const ix = W * e, iy = H * e, pw = (W - 2 * ix) * k, ph = (H - 2 * iy) * k;
+  const piece = document.createElement('canvas'); piece.width = Math.round(pw); piece.height = Math.round(ph);
+  const pg = piece.getContext('2d'); pg.drawImage(img, ix, iy, W - 2 * ix, H - 2 * iy, 0, 0, piece.width, piece.height);
+  pg.globalCompositeOperation = 'destination-out';
+  const f = Math.min(piece.width, piece.height) * (plate ? .05 : .02);
+  for (const [gx0, gy0, gx1, gy1, rx, ry, rw, rh] of [[0, 0, f, 0, 0, 0, f, piece.height], [piece.width, 0, piece.width - f, 0, piece.width - f, 0, f, piece.height],
+    [0, 0, 0, f, 0, 0, piece.width, f], [0, piece.height, 0, piece.height - f, 0, piece.height - f, piece.width, f]]) {
+    const gr = pg.createLinearGradient(gx0, gy0, gx1, gy1); gr.addColorStop(0, 'rgba(0,0,0,1)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
+    pg.fillStyle = gr; pg.fillRect(rx, ry, rw, rh);
+  }
+  const c = document.createElement('canvas'); c.width = c.height = S;
+  const g = c.getContext('2d');
+  g.fillStyle = paper; g.fillRect(0, 0, S, S);
+  g.drawImage(piece, S / 2 - (cx - ix) * k, S / 2 - (cy - iy) * k);
+  return c;
+}
+function setSource(img, opts = {}) {
+  if (opts.box) { img = framed(img, opts.box); opts = {}; }
+  const max = 1400, s = Math.min(1, max / Math.max(img.width, img.height));
+  const c = document.createElement('canvas');
+  c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+  c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+  state.src = c; state.zoom = 1; state.cx = .5; state.cy = .5;
+  state.bgLab = borderColor(c);
+  $('#zoom').value = state.zoom; $('#zoomOut').textContent = state.zoom.toFixed(1) + '×';
+  update();
+}
+// the picture's background: the most common colour around the border of the whole image (not the current crop)
+function borderColor(c, r) {
+  const w = c.width, h = c.height, d = c.getContext('2d').getImageData(0, 0, w, h).data, bins = new Map(), L = [0, 0, 0];
+  if (r) {   // the ring just around a framed subject
+    const X0 = Math.round(r.x0), X1 = Math.min(w - 1, Math.round(r.x1)), Y0 = Math.round(r.y0), Y1 = Math.min(h - 1, Math.round(r.y1));
+    const add = (x, y) => { const i = (y * w + x) * 4; lab(d[i], d[i + 1], d[i + 2], L); const key = Math.round(L[0] / 6) + ',' + Math.round(L[1] / 6) + ',' + Math.round(L[2] / 6); const b = bins.get(key) || [0, 0, 0, 0]; b[0] += L[0]; b[1] += L[1]; b[2] += L[2]; b[3]++; bins.set(key, b); };
+    for (let x = X0; x <= X1; x += 2) { add(x, Y0); add(x, Y1); }
+    for (let y = Y0; y <= Y1; y += 2) { add(X0, y); add(X1, y); }
+    const [b] = [...bins.values()].sort((p, q) => q[3] - p[3]);
+    return [b[0] / b[3], b[1] / b[3], b[2] / b[3]];
+  }
+  const add = (x, y) => {
+    const i = (y * w + x) * 4; lab(d[i], d[i + 1], d[i + 2], L);
+    const key = Math.round(L[0] / 6) + ',' + Math.round(L[1] / 6) + ',' + Math.round(L[2] / 6);
+    const b = bins.get(key) || [0, 0, 0, 0]; b[0] += L[0]; b[1] += L[1]; b[2] += L[2]; b[3]++; bins.set(key, b);
+  };
+  const step = Math.max(1, Math.round(Math.max(w, h) / 400));
+  for (let x = 0; x < w; x += step) for (const y of [0, 2, h - 3, h - 1]) add(x, y);
+  for (let y = 0; y < h; y += step) for (const x of [0, 2, w - 3, w - 1]) add(x, y);
+  const [b] = [...bins.values()].sort((p, q) => q[3] - p[3]);
+  return [b[0] / b[3], b[1] / b[3], b[2] / b[3]];
+}
+function loadFile(f) {
+  if (!f || !f.type.startsWith('image/')) return;
+  const url = URL.createObjectURL(f), img = new Image();
+  img.onload = () => { setSource(img); setCredit(null); URL.revokeObjectURL(url); };
+  img.src = url;
+}
+// samples, drawn here so they're free to use; each tap of Sample moves to the next
+// draw the sample freely, then measure what was drawn and centre it, scaled so it sits comfortably inside a circle
+function sampleCanvas(draw) {
+  const S = 900, raw = document.createElement('canvas'); raw.width = raw.height = S;
+  const r = raw.getContext('2d');
+  r.fillStyle = '#ffffff'; r.fillRect(0, 0, S, S);
+  draw(r);
+  const d = r.getImageData(0, 0, S, S).data;
+  let x0 = S, y0 = S, x1 = 0, y1 = 0;
+  for (let y = 0; y < S; y += 2) for (let x = 0; x < S; x += 2) {
+    const i = (y * S + x) * 4;
+    if (d[i] + d[i + 1] + d[i + 2] < 750) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  }
+  const w = x1 - x0 + 2, h = y1 - y0 + 2, k = (S * .74) / Math.hypot(w, h);   // the content's diagonal fits within the circle
+  const c = document.createElement('canvas'); c.width = c.height = S;
+  const g = c.getContext('2d');
+  g.fillStyle = '#ffffff'; g.fillRect(0, 0, S, S);
+  g.imageSmoothingQuality = 'high';
+  g.drawImage(raw, x0, y0, w, h, (S - w * k) / 2, (S - h * k) / 2, w * k, h * k);
+  return c;
+}
+const blob = (g, x, y, rx, ry, rot = 0) => { g.beginPath(); g.ellipse(x, y, rx, ry, rot, 0, TAU); g.fill(); };
+function leaves(g, x, y, n, len, wid, spread, start, col) {
+  g.fillStyle = col;
+  for (let k = 0; k < n; k++) { g.save(); g.translate(x, y); g.rotate(start + k * spread); blob(g, 0, -len * .45, wid, len * .55); g.restore(); }
+}
+function sparkle(g, x, y, r, col = '#ffd34d') {
+  g.fillStyle = col; g.beginPath(); g.moveTo(x, y - r);
+  g.quadraticCurveTo(x + r * .16, y - r * .16, x + r, y); g.quadraticCurveTo(x + r * .16, y + r * .16, x, y + r);
+  g.quadraticCurveTo(x - r * .16, y + r * .16, x - r, y); g.quadraticCurveTo(x - r * .16, y - r * .16, x, y - r); g.fill();
+}
+const SAMPLES = [
+  g => {   // apple: two soft shoulders, a dimple for the stem, a leaf and a shine
+    g.fillStyle = '#b8392f';
+    g.beginPath(); g.moveTo(450, 330);
+    g.bezierCurveTo(390, 270, 220, 270, 205, 450); g.bezierCurveTo(195, 600, 300, 760, 390, 770);
+    g.bezierCurveTo(425, 773, 435, 755, 450, 755); g.bezierCurveTo(465, 755, 475, 773, 510, 770);
+    g.bezierCurveTo(600, 760, 705, 600, 695, 450); g.bezierCurveTo(680, 270, 510, 270, 450, 330); g.fill();
+    g.fillStyle = '#8f2a24'; g.beginPath(); g.ellipse(560, 600, 120, 150, -.3, 0, TAU); g.fill();
+    g.fillStyle = '#b8392f'; g.beginPath(); g.ellipse(520, 560, 150, 170, -.3, 0, TAU); g.fill();
+    g.fillStyle = '#e07a6c'; blob(g, 300, 430, 40, 78, .45);
+    g.strokeStyle = '#5a4126'; g.lineWidth = 22; g.lineCap = 'round';
+    g.beginPath(); g.moveTo(450, 340); g.quadraticCurveTo(455, 270, 485, 220); g.stroke();
+    g.fillStyle = '#6b8445'; g.beginPath(); g.moveTo(480, 250); g.quadraticCurveTo(560, 170, 640, 205); g.quadraticCurveTo(580, 285, 480, 250); g.fill();
+    g.strokeStyle = '#4a6233'; g.lineWidth = 8; g.beginPath(); g.moveTo(490, 247); g.quadraticCurveTo(560, 225, 625, 210); g.stroke();
+    sparkle(g, 720, 300, 44);
+  },
+  g => {   // strawberry
+    g.fillStyle = '#c4473b'; g.beginPath(); g.moveTo(450, 790);
+    g.bezierCurveTo(250, 700, 170, 470, 230, 350); g.bezierCurveTo(290, 250, 610, 250, 670, 350);
+    g.bezierCurveTo(730, 470, 650, 700, 450, 790); g.fill();
+    g.fillStyle = '#df8a7c'; blob(g, 330, 420, 46, 80, -.5);
+    g.fillStyle = '#ecd08a';
+    for (const [x, y] of [[390, 400], [500, 380], [600, 420], [340, 520], [450, 500], [560, 520], [400, 620], [510, 620], [455, 710], [620, 560]]) blob(g, x, y, 11, 17);
+    leaves(g, 450, 300, 5, 190, 34, .55, -1.1, '#6b8445');
+    g.fillStyle = '#4a6233'; blob(g, 450, 290, 40, 40);
+    g.strokeStyle = '#4a6233'; g.lineWidth = 26; g.lineCap = 'round';
+    g.beginPath(); g.moveTo(450, 280); g.quadraticCurveTo(460, 190, 520, 150); g.stroke();
+    sparkle(g, 720, 230, 50);
+  },
+  g => {   // loon: floating low on the water, checkered back, black head, red eye, white necklace
+    g.strokeStyle = '#5d7d93'; g.lineWidth = 18; g.lineCap = 'round';   // ripples
+    for (const [x, y, w] of [[230, 655, 120], [470, 680, 200], [690, 650, 110], [360, 712, 120], [600, 718, 90]]) { g.beginPath(); g.moveTo(x - w / 2, y); g.lineTo(x + w / 2, y); g.stroke(); }
+    g.fillStyle = '#2a2b2e';   // body
+    g.beginPath(); g.moveTo(170, 600); g.bezierCurveTo(200, 500, 330, 470, 470, 480); g.bezierCurveTo(600, 490, 680, 520, 720, 560);
+    g.bezierCurveTo(745, 590, 730, 625, 690, 630); g.lineTo(230, 630); g.bezierCurveTo(190, 630, 165, 620, 170, 600); g.fill();
+    g.fillStyle = '#f2efe6';   // the checkered back
+    for (let r = 0; r < 4; r++) for (let c = 0; c < 9; c++) {
+      const x = 300 + c * 38 + (r % 2) * 19, y = 510 + r * 24;
+      if (x < 640 - r * 20) g.fillRect(x, y, 14, 9);
+    }
+    g.fillStyle = '#e8e4da'; g.fillRect(230, 618, 450, 10);   // pale waterline
+    g.fillStyle = '#2a2b2e';   // neck and head
+    g.beginPath(); g.moveTo(230, 560); g.bezierCurveTo(210, 470, 200, 400, 240, 360); g.bezierCurveTo(280, 330, 340, 345, 340, 400);
+    g.bezierCurveTo(338, 450, 310, 500, 330, 545); g.closePath(); g.fill();
+    g.fillStyle = '#3a3c40'; g.beginPath(); g.moveTo(245, 375); g.lineTo(110, 398); g.lineTo(240, 412); g.closePath(); g.fill();   // dagger bill
+    g.fillStyle = '#c0392b'; blob(g, 270, 378, 17, 17);
+    g.strokeStyle = '#f2efe6'; g.lineWidth = 7; g.lineCap = 'butt';   // necklace
+    for (let k = 0; k < 4; k++) { g.beginPath(); g.moveTo(232 + k * 3, 440 + k * 13); g.lineTo(318 - k * 2, 436 + k * 13); g.stroke(); }
+    sparkle(g, 700, 330, 40);
+  },
+  g => {   // blueberries
+    for (const [x, y, r] of [[300, 580, 150], [600, 590, 145], [450, 360, 150]]) {
+      g.fillStyle = '#2e3655'; blob(g, x, y, r + 16, r + 16);
+      g.fillStyle = '#4d5c8a'; blob(g, x, y, r, r);
+      g.fillStyle = '#7d8bb4'; blob(g, x - r * .38, y - r * .36, r * .22, r * .34, .7);
+      g.fillStyle = '#283152'; g.save(); g.translate(x + r * .05, y - r * .05);
+      for (let k = 0; k < 5; k++) { g.rotate(TAU / 5); g.beginPath(); g.moveTo(0, 0); g.lineTo(-r * .1, -r * .2); g.lineTo(r * .1, -r * .2); g.closePath(); g.fill(); }
+      g.restore();
+    }
+    leaves(g, 470, 215, 2, 170, 48, 1.3, -.7, '#6b8445');
+    sparkle(g, 740, 280, 46);
+  },
+  g => {   // banana: an even crescent, blunt ends, a short stem and a dark tip
+    g.save(); g.translate(0, 70);
+    const body = new Path2D(); body.arc(450, 200, 360, 0, Math.PI); body.arc(450, 70, 300, Math.PI - .449, .449, true); body.closePath();
+    g.save(); g.beginPath(); g.rect(0, 200, 900, 500); g.clip();
+    g.fillStyle = '#dcb44c'; g.fill(body);
+    g.save(); g.clip(body);
+    g.strokeStyle = '#b88f2f'; g.lineWidth = 34; g.beginPath(); g.arc(450, 200, 362, .15, Math.PI - .15); g.stroke();   // shade along the underside
+    g.strokeStyle = '#ead18a'; g.lineWidth = 26; g.beginPath(); g.arc(450, 150, 330, .4, Math.PI - .4); g.stroke();   // the ridge catching the light
+    g.restore(); g.restore();
+    g.fillStyle = '#7d6a2c'; g.beginPath(); g.moveTo(95, 210); g.lineTo(150, 210); g.lineTo(110, 130); g.lineTo(76, 140); g.closePath(); g.fill();   // stem
+    g.fillStyle = '#4a3520'; blob(g, 92, 134, 22, 14, .4); blob(g, 780, 214, 22, 16);                                                              // dark tips
+    g.restore();
+    sparkle(g, 450, 250, 46);
+  },
+];
+// public-domain natural-history plates from Wikimedia Commons: classic cross-stitch subjects
+const COMMONS = [
+  // one clear subject on a plain ground: sky, black or white. Framed automatically around the subject, then
+  // nudged by eye: [shift x, shift y (fractions of the subject's size; + moves the subject left/up), scale (>1 = smaller)]
+  ['Aix sponsa -Texas, USA -flying-8.jpg', 'Wood duck', [-.06, .06, 1.15]],
+  ["Anna's hummingbird (41124).jpg", "Anna's hummingbird"],
+  ['Mallard flying - DPLA - 0202be3614eca025a17e093e6fa934e3.jpg', 'Mallard', [0, -.06]],
+  ['Wet apple isolated on white.jpg', 'Apple', [0, -.04]],
+  ['Male northern pintail in flight-8276.jpg', 'Northern pintail', [0, .06]],
+  ['Yellow tulip (Unsplash).jpg', 'Yellow tulip'],
+  ['Hummingbird moth has at the butterfly bush (5060238615).jpg', 'Hummingbird moth'],
+  ['Greater white-fronted goose in flight-1045.jpg', 'White-fronted goose', [-.06, 0]],
+  ['Tulip (33401136905).jpg', 'Red tulip', [0, -.06]],
+  ['Wood Duck (Aix sponsa) (19729068324).jpg', 'Wood duck, gliding', [0, -.06]],
+];
+let commonsInfo = null, sampleIdx = (+(location.hash.match(/s=(\d+)/) || [])[1] || 0) - 1, sampleBusy = false;
+async function commonsSamples() {
+  if (commonsInfo) return commonsInfo;
+  const url = 'https://commons.wikimedia.org/w/api.php?' + new URLSearchParams({
+    action: 'query', format: 'json', origin: '*', prop: 'imageinfo', iiprop: 'url|extmetadata', iiurlwidth: '1280',
+    titles: COMMONS.map(([f]) => 'File:' + f).join('|'),
+  });
+  const data = await (await fetch(url)).json(), byTitle = {};
+  for (const p of Object.values(data.query.pages)) if (p.imageinfo) byTitle[p.title.replace(/^File:/, '')] = p;
+  const norm = data.query.normalized || [];
+  const clean = h => (h || '').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+  commonsInfo = COMMONS.map(([f, name, nudge]) => {
+    const t = (norm.find(n => n.from === 'File:' + f)?.to || 'File:' + f).replace(/^File:/, ''), p = byTitle[t];
+    if (!p) return null;
+    const ii = p.imageinfo[0], m = ii.extmetadata || {};
+    const artist = clean(m.Artist?.value).split(/[;(]/)[0].replace(/\s*,\s*$/, '');
+    return { src: ii.thumburl || ii.url, page: ii.descriptionurl, title: name, nudge, artist, license: clean(m.LicenseShortName?.value) };
+  }).filter(Boolean);
+  return commonsInfo;
+}
+async function samplePicture() {
+  if (sampleBusy) return;
+  sampleBusy = true; document.body.classList.add('loading');
+  try {
+    const list = await commonsSamples();
+    for (let tries = 0; tries < list.length; tries++) {
+      sampleIdx = (sampleIdx + 1) % list.length;
+      const s = list[sampleIdx];
+      try { const im = await loadImage(s.src); setSource(im, { box: nudged(findSubject(im), s.nudge) }); setCredit(s); history.replaceState(null, '', '#s=' + sampleIdx); return; } catch (e) { /* try the next one */ }
+    }
+    throw new Error('no samples');
+  } catch (e) {   // offline: fall back to the drawn samples
+    sampleIdx = (sampleIdx + 1) % SAMPLES.length;
+    setSource(sampleCanvas(SAMPLES[sampleIdx])); setCredit(null);
+  } finally { sampleBusy = false; document.body.classList.remove('loading'); }
+}
+function loadImage(src) {
+  return new Promise((res, rej) => { const im = new Image(); im.crossOrigin = 'anonymous'; im.onload = () => res(im); im.onerror = rej; im.src = src; });
+}
+function setCredit(s) {
+  const el = $('#credit');
+  if (!s) { el.hidden = true; return; }
+  el.hidden = false; el.href = s.page;
+  el.innerHTML = `<i>Sample:</i> ${s.title}${s.artist ? ' · ' + s.artist : ''} · ${s.license || 'public domain'}`;
+}
+
+
+// ---------- making the pattern ----------
+const shapeOf = () => SHAPES.find(s => s.id === state.shape);
+function inShape(u, v) {   // u, v in -1..1 across the grid
+  switch (state.shape) {
+    case 'circle': case 'oval': return u * u + v * v <= 1;
+    case 'heart': { const x = u * 1.2, y = 1.32 - (v + 1) / 2 * 2.44, q = x * x + y * y - 1; return q * q * q - x * x * y * y * y <= 0; }
+    default: return true;
+  }
+}
+function cropRect(cols, rows) {
+  const S = state.src, A = cols / rows;
+  let w, h;
+  if (S.width / S.height > A) { h = S.height / state.zoom; w = h * A; } else { w = S.width / state.zoom; h = w / A; }
+  const x = clamp(state.cx * S.width - w / 2, 0, S.width - w), y = clamp(state.cy * S.height - h / 2, 0, S.height - h);
+  state.cx = (x + w / 2) / S.width; state.cy = (y + h / 2) / S.height;
+  return { x, y, w, h };
+}
+function kmeans(px, n, k, rng) {
+  k = Math.min(k, n);
+  const C = new Float32Array(k * 3), d2 = new Float32Array(n).fill(Infinity);
+  // k-means++ seeding: spread the starting colours out
+  let first = (rng() * n) | 0;
+  for (let c = 0; c < k; c++) {
+    if (c === 0) { C[0] = px[first * 3]; C[1] = px[first * 3 + 1]; C[2] = px[first * 3 + 2]; }
+    else {
+      let sum = 0;
+      for (let p = 0; p < n; p++) {
+        const a = px[p * 3] - C[(c - 1) * 3], b = px[p * 3 + 1] - C[(c - 1) * 3 + 1], e = px[p * 3 + 2] - C[(c - 1) * 3 + 2];
+        d2[p] = Math.min(d2[p], a * a + b * b + e * e); sum += d2[p];
+      }
+      let r = rng() * sum, p = 0;
+      for (; p < n - 1 && (r -= d2[p]) > 0; p++);
+      C[c * 3] = px[p * 3]; C[c * 3 + 1] = px[p * 3 + 1]; C[c * 3 + 2] = px[p * 3 + 2];
+    }
+  }
+  const lab = new Int16Array(n), S = new Float64Array(k * 4);
+  for (let it = 0; it < 9; it++) {
+    S.fill(0);
+    for (let p = 0; p < n; p++) {
+      let best = 0, bd = Infinity;
+      for (let c = 0; c < k; c++) {
+        const a = px[p * 3] - C[c * 3], b = px[p * 3 + 1] - C[c * 3 + 1], e = px[p * 3 + 2] - C[c * 3 + 2], dd = a * a + b * b + e * e;
+        if (dd < bd) { bd = dd; best = c; }
+      }
+      lab[p] = best; S[best * 4] += px[p * 3]; S[best * 4 + 1] += px[p * 3 + 1]; S[best * 4 + 2] += px[p * 3 + 2]; S[best * 4 + 3]++;
+    }
+    for (let c = 0; c < k; c++) if (S[c * 4 + 3]) for (let q = 0; q < 3; q++) C[c * 3 + q] = S[c * 4 + q] / S[c * 4 + 3];
+  }
+  return { C, k };
+}
+const nearest = (L, list) => { let best = 0, bd = Infinity; for (let i = 0; i < list.length; i++) { const f = list[i].lab, a = L[0] - f[0], b = L[1] - f[1], c = L[2] - f[2], d = a * a + b * b + c * c; if (d < bd) { bd = d; best = i; } } return best; };
+
+const SYMBOLS = ['●', '■', '▲', '◆', '★', '✚', '○', '□', '△', '◇', '☆', '✕', '♥', '♣', '♠', '♦', '▼', '◀', '▶', '◐', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'K', 'M', 'N', 'P'];
+
+// background: flood inward from the border of the image, but only across smooth ground (bokeh, paper, sky) and only
+// while the colour stays near the background colour. Any real edge stops it, so a green bird on a green blur survives.
+function floodBackground(P, W, H, B) {
+  const M = W * H, bg = new Uint8Array(M), stack = [];
+  const toBg = q => Math.hypot(P[q * 3] - B[0], P[q * 3 + 1] - B[1], P[q * 3 + 2] - B[2]);
+  const de = (a, b) => Math.hypot(P[a * 3] - P[b * 3], P[a * 3 + 1] - P[b * 3 + 1], P[a * 3 + 2] - P[b * 3 + 2]);
+  // how varied is the ground along the border? a flat paper gets a tight tolerance; a blurred photo background a looser one
+  const ring = [];
+  for (let x = 0; x < W; x += 2) ring.push(toBg(x), toBg((H - 1) * W + x));
+  for (let y = 0; y < H; y += 2) ring.push(toBg(y * W), toBg(y * W + W - 1));
+  // only border pixels that could be background count; if the crop's edge is all subject (zoomed in), they're ignored
+  // and the tolerance stays tight, so the subject can't be mistaken for a varied background
+  const near = ring.filter(d => d < 32).sort((a, b) => a - b);
+  const spread = near.length > ring.length * .1 ? near[Math.floor(near.length * .8)] : 0;
+  const STEP = 5.5, SEED = Math.min(30, Math.max(14, spread + 8)), FAR = Math.max(20, Math.min(48, spread + 16));
+  const seed = q => { if (!bg[q] && toBg(q) < SEED) { bg[q] = 1; stack.push(q); } };
+  for (let x = 0; x < W; x++) { seed(x); seed((H - 1) * W + x); }
+  for (let y = 0; y < H; y++) { seed(y * W); seed(y * W + W - 1); }
+  while (stack.length) {
+    const q = stack.pop(), x = q % W, y = (q / W) | 0;
+    for (const n of [x > 0 ? q - 1 : -1, x < W - 1 ? q + 1 : -1, y > 0 ? q - W : -1, y < H - 1 ? q + W : -1])
+      if (n >= 0 && !bg[n] && de(q, n) < STEP && toBg(n) < FAR) { bg[n] = 1; stack.push(n); }
+  }
+  return bg;
+}
+// where is the subject? run the same background flood on a small copy and take the bounds of what's left
+function nudged(b, n) {
+  if (!n) return b;
+  const [dx = 0, dy = 0, k = 1] = n, w = b[2] - b[0], h = b[3] - b[1], cx = (b[0] + b[2]) / 2 + dx * w, cy = (b[1] + b[3]) / 2 + dy * h;
+  return [cx - w * k / 2, cy - h * k / 2, cx + w * k / 2, cy + h * k / 2];
+}
+function findSubject(img) {
+  const k = Math.min(1, 260 / Math.max(img.width, img.height)), W = Math.round(img.width * k), H = Math.round(img.height * k);
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const g = c.getContext('2d'); g.drawImage(img, 0, 0, W, H);
+  const d = g.getImageData(0, 0, W, H).data, P = new Float32Array(W * H * 3), L = [0, 0, 0];
+  for (let q = 0; q < W * H; q++) { lab(d[q * 4], d[q * 4 + 1], d[q * 4 + 2], L); P[q * 3] = L[0]; P[q * 3 + 1] = L[1]; P[q * 3 + 2] = L[2]; }
+  const bg = floodBackground(P, W, H, borderColor(c)), xs = [], ys = [];
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (!bg[y * W + x]) { xs.push(x); ys.push(y); }
+  if (xs.length < W * H * .01) return [.1, .1, .9, .9];
+  xs.sort((a, b) => a - b); ys.sort((a, b) => a - b);
+  const q = (a, f) => a[Math.floor((a.length - 1) * f)];
+  return [q(xs, .005) / W, q(ys, .005) / H, (q(xs, .995) + 1) / W, (q(ys, .995) + 1) / H];
+}
+function makePattern() {
+  const cols = state.cols, rows = Math.max(4, Math.round(cols * shapeOf().aspect));
+  const r = cropRect(cols, rows);
+  // work at a few pixels per stitch, so edges between subject and background can be found precisely
+  const sub = cols <= 60 ? 5 : cols <= 110 ? 4 : 3, W = cols * sub, H = rows * sub, M = W * H;
+  const t = document.createElement('canvas'); t.width = W; t.height = H;
+  const g = t.getContext('2d'); g.imageSmoothingQuality = 'high';
+  g.drawImage(state.src, r.x, r.y, r.w, r.h, 0, 0, W, H);
+  const d = g.getImageData(0, 0, W, H).data, P = new Float32Array(M * 3), L = [0, 0, 0];
+  for (let q = 0; q < M; q++) { lab(d[q * 4], d[q * 4 + 1], d[q * 4 + 2], L); P[q * 3] = L[0]; P[q * 3 + 1] = L[1]; P[q * 3 + 2] = L[2]; }
+  const de = (a, b) => Math.hypot(P[a * 3] - P[b * 3], P[a * 3 + 1] - P[b * 3 + 1], P[a * 3 + 2] - P[b * 3 + 2]);
+
+  // background: flood inward from the border of the crop, but only across smooth ground (bokeh, paper, sky) and only
+  // while the colour stays near the picture's background. Any real edge stops it, so a green bird on a green blur survives.
+  const bg = state.bare && state.bgLab ? floodBackground(P, W, H, state.bgLab) : new Uint8Array(M);
+
+  // each stitch: how much of its square is subject, and the subject's own colour there (background never mixes in)
+  const N = cols * rows, inside = new Uint8Array(N), cover = new Float32Array(N), all = new Float32Array(N * 3), px = new Float32Array(N * 3), map = new Int32Array(N);
+  for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
+    const id = j * cols + i;
+    if (!inShape((i + .5) / cols * 2 - 1, (j + .5) / rows * 2 - 1)) continue;
+    inside[id] = 1;
+    let R = 0, G = 0, Bl = 0, k = 0, aR = 0, aG = 0, aB = 0;
+    for (let y = j * sub; y < (j + 1) * sub; y++) for (let x = i * sub; x < (i + 1) * sub; x++) {
+      const q = y * W + x; aR += d[q * 4]; aG += d[q * 4 + 1]; aB += d[q * 4 + 2];
+      if (!bg[q]) { R += d[q * 4]; G += d[q * 4 + 1]; Bl += d[q * 4 + 2]; k++; }
+    }
+    const n2 = sub * sub; cover[id] = k / n2;
+    if (k) lab(R / k | 0, G / k | 0, Bl / k | 0, L); else lab(aR / n2 | 0, aG / n2 | 0, aB / n2 | 0, L);
+    all[id * 3] = L[0]; all[id * 3 + 1] = L[1]; all[id * 3 + 2] = L[2];
+  }
+  // a stitch goes where its square is mostly subject
+  let n = 0;
+  for (let id = 0; id < N; id++) if (inside[id]) {
+    if (cover[id] <= .5) continue;
+    px[n * 3] = all[id * 3]; px[n * 3 + 1] = all[id * 3 + 1]; px[n * 3 + 2] = all[id * 3 + 2]; map[n++] = id;
+  }
+  const nb = (i, j, f) => { for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) if ((di || dj) && i + di >= 0 && i + di < cols && j + dj >= 0 && j + dj < rows) f((j + dj) * cols + i + di); };
+  const candidates = FLOSS;
+  const { C, k } = kmeans(px, n, state.colors, mulberry32(7));
+  // each colour cluster becomes its nearest real floss; then every stitch takes the nearest of those
+  const chosen = [];
+  for (let c = 0; c < k; c++) { const f = candidates[nearest([C[c * 3], C[c * 3 + 1], C[c * 3 + 2]], candidates)]; if (!chosen.includes(f)) chosen.push(f); }
+  const grid = new Int16Array(N).fill(-1);
+  for (let p = 0; p < n; p++) grid[map[p]] = nearest([px[p * 3], px[p * 3 + 1], px[p * 3 + 2]], chosen);
+
+  // tidy: lone stitches (and at level 2, pairs) take on their neighbours' colour — kinder to stitch
+  for (let pass = 0; pass < state.tidy; pass++) {
+    const out = grid.slice();
+    for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
+      const id = j * cols + i, me = grid[id]; if (me < 0) continue;
+      let same = 0; const votes = new Map();
+      nb(i, j, q => { const v = grid[q]; if (v === me) same++; else if (v >= 0) votes.set(v, (votes.get(v) || 0) + 1); });
+      if (same <= pass && votes.size) out[id] = [...votes].sort((a, b) => b[1] - a[1])[0][0];
+    }
+    grid.set(out);
+  }
+  // count, drop unused threads, order by how much each is used
+  const counts = new Int32Array(chosen.length);
+  for (let id = 0; id < N; id++) if (grid[id] >= 0) counts[grid[id]]++;
+  const order = chosen.map((f, i) => i).filter(i => counts[i]).sort((a, b) => counts[b] - counts[a]);
+  const remap = new Int16Array(chosen.length).fill(-1); order.forEach((o, i) => remap[o] = i);
+  for (let id = 0; id < N; id++) if (grid[id] >= 0) grid[id] = remap[grid[id]];
+  const threads = order.map((o, i) => ({ floss: chosen[o], count: counts[o], symbol: SYMBOLS[i % SYMBOLS.length] }));
+  pattern = { cols, rows, grid, threads, inside };
+}
+
+// ---------- drawing the stitches ----------
+const fabricOf = () => FABRICS.find(f => f.id === state.fabric);
+// Aida: little woven blocks with holes at the corners
+function drawFabric(ctx, cell, ox, oy, nx, ny) {
+  const fab = fabricOf().hex, dark = luma(fab) < .4;
+  ctx.fillStyle = fab; ctx.fillRect(ox, oy, nx * cell, ny * cell);
+  if (cell < 5) return;
+  ctx.fillStyle = mixHex(fab, '#ffffff', dark ? .06 : .35);
+  const blk = new Path2D(), m = cell * .14;
+  for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) blk.rect(ox + i * cell + m, oy + j * cell + m, cell - 2 * m, cell - 2 * m);
+  ctx.fill(blk);
+  ctx.fillStyle = mixHex(fab, '#000000', dark ? .45 : .28);
+  const holes = new Path2D(), hr = Math.max(.6, cell * .08);
+  for (let j = 0; j <= ny; j++) for (let i = 0; i <= nx; i++) { holes.moveTo(ox + i * cell + hr, oy + j * cell); holes.arc(ox + i * cell, oy + j * cell, hr, 0, TAU); }
+  ctx.fill(holes);
+}
+// ---------- the stitches: real floss ----------
+function drawStitched(ctx, cell, ox = 0, oy = 0) {
+  const { cols, rows, grid, threads } = pattern, r = mulberry32(11);
+  // every bottom leg first, then every top leg, as a stitcher works
+  for (const top of [0, 1]) for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
+    const k = grid[j * cols + i]; if (k < 0) continue;
+    const jx = (cellHash(i, j, 1) - .5) * cell * .06, jy = (cellHash(i, j, 2) - .5) * cell * .06;
+    Stitch.legReal(ctx, Stitch.legs(ox + i * cell, oy + j * cell, cell, jx, jy)[top], cell, threads[k].floss.hex, top, r);
+  }
+}
+
+// ---------- the chart ----------
+// o.paper: fill the whole canvas white (for files); otherwise only the grid gets a white sheet (on the page)
+function drawChart(ctx, cell, c0, r0, c1, r1, mode, margin, o = {}) {
+  const { cols, grid, threads } = pattern, W = (c1 - c0) * cell, H = (r1 - r0) * cell, u = o.u || 1;
+  if (o.paper !== false) { ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W + margin * 2, H + margin * 2); }
+  ctx.save(); ctx.translate(margin, margin);
+  if (o.paper === false) {
+    ctx.save(); ctx.shadowColor = 'rgba(30,50,40,.16)'; ctx.shadowBlur = 18 * u; ctx.shadowOffsetY = 5 * u;
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H); ctx.restore();
+  }
+  const sym = threads.map(t => ({ fill: mixHex(t.floss.hex, '#ffffff', .25), ink: luma(t.floss.hex) > .55 ? '#2a211b' : '#ffffff' }));
+  const showSym = cell >= 7 * u;
+  ctx.font = `${Math.round(cell * .68)}px system-ui, "Apple Symbols", "Segoe UI Symbol", sans-serif`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  for (let j = r0; j < r1; j++) for (let i = c0; i < c1; i++) {
+    const k = grid[j * cols + i], x = (i - c0) * cell, y = (j - r0) * cell;
+    if (k < 0) { if (!pattern.inside[j * cols + i]) { ctx.fillStyle = '#f3efe7'; ctx.fillRect(x, y, cell, cell); } continue; }
+    if (mode === 'colour' || !showSym) { ctx.fillStyle = sym[k].fill; ctx.fillRect(x, y, cell, cell); ctx.fillStyle = sym[k].ink; }
+    else ctx.fillStyle = '#1d1712';
+    if (showSym) ctx.fillText(threads[k].symbol, x + cell / 2, y + cell / 2 + cell * .04);
+  }
+  // grid: fine lines, a bold line every ten, numbers along the top and left, arrows at the center
+  if (cell >= 4 * u) {
+    ctx.lineWidth = u; ctx.strokeStyle = 'rgba(0,0,0,.2)'; ctx.beginPath();
+    for (let i = c0; i <= c1; i++) { ctx.moveTo((i - c0) * cell, 0); ctx.lineTo((i - c0) * cell, H); }
+    for (let j = r0; j <= r1; j++) { ctx.moveTo(0, (j - r0) * cell); ctx.lineTo(W, (j - r0) * cell); }
+    ctx.stroke();
+  }
+  ctx.lineWidth = 2 * u; ctx.strokeStyle = 'rgba(0,0,0,.62)'; ctx.beginPath();
+  for (let i = c0; i <= c1; i++) if (i % 10 === 0 || i === c1) { ctx.moveTo((i - c0) * cell, 0); ctx.lineTo((i - c0) * cell, H); }
+  for (let j = r0; j <= r1; j++) if (j % 10 === 0 || j === r1) { ctx.moveTo(0, (j - r0) * cell); ctx.lineTo(W, (j - r0) * cell); }
+  ctx.stroke();
+  ctx.fillStyle = o.label || '#5b4d42'; ctx.font = `400 ${Math.round(Math.min(12 * u, Math.max(9 * u, cell * .62)))}px "DM Mono", ui-monospace, monospace`;
+  for (let i = c0; i <= c1; i++) if (i % 10 === 0 && i) ctx.fillText(String(i), (i - c0) * cell, -margin * .45);
+  ctx.textAlign = 'right';
+  for (let j = r0; j <= r1; j++) if (j % 10 === 0 && j) ctx.fillText(String(j), -6 * u, (j - r0) * cell);
+  const mc = pattern.cols / 2, mr = pattern.rows / 2, a = 6 * u;
+  ctx.fillStyle = '#a4462e';
+  if (mc >= c0 && mc <= c1) { const x = (mc - c0) * cell; ctx.beginPath(); ctx.moveTo(x - a, H + 4 * u); ctx.lineTo(x + a, H + 4 * u); ctx.lineTo(x, H + 13 * u); ctx.closePath(); ctx.fill(); }
+  if (mr >= r0 && mr <= r1) { const y = (mr - r0) * cell; ctx.beginPath(); ctx.moveTo(W + 4 * u, y - a); ctx.lineTo(W + 4 * u, y + a); ctx.lineTo(W + 13 * u, y); ctx.closePath(); ctx.fill(); }
+  ctx.restore();
+}
+
+// ---------- the page is the cloth ----------
+const PAGE = Object.fromEntries(FABRICS.map(f => [f.id, f]));   // how each fabric looks as a whole page, and the ink that reads on it
+const look = () => PAGE[state.fabric];
+function applyLook() {
+  const L = look(), r = document.documentElement.style;
+  r.setProperty('--page', L.page); r.setProperty('--on', L.on); r.setProperty('--on-muted', L.muted); r.setProperty('--title', L.title);
+  document.querySelector('meta[name=theme-color]')?.setAttribute('content', L.page);
+}
+// the outline of the chosen shape, slightly outside the outermost stitches
+function shapePath(cell, ox, oy) {
+  const { cols, rows } = pattern, W = cols * cell, H = rows * cell, cx = ox + W / 2, cy = oy + H / 2, out = cell * .55;
+  const p = new Path2D(), sh = state.shape;
+  if (sh === 'circle' || sh === 'oval') p.ellipse(cx, cy, W / 2 + out, H / 2 + out, 0, 0, TAU);
+  else if (sh === 'heart') {
+    // walk round the heart: from its middle, find where each ray leaves the shape
+    const c0 = [0, .05], N = 240;
+    for (let k = 0; k <= N; k++) {
+      const a = k / N * TAU, dx = Math.cos(a), dy = Math.sin(a);
+      let lo = 0, hi = 2.2;
+      for (let it = 0; it < 22; it++) { const m = (lo + hi) / 2; if (inShape(c0[0] + dx * m, c0[1] + dy * m)) lo = m; else hi = m; }
+      const x = cx + (c0[0] + dx * lo) * W / 2 + dx * out, y = cy + (c0[1] + dy * lo) * H / 2 + dy * out;
+      k ? p.lineTo(x, y) : p.moveTo(x, y);
+    }
+    p.closePath();
+  } else p.roundRect(ox - out, oy - out, W + out * 2, H + out * 2, cell * .9);
+  return p;
+}
+// cloth colour, the piece's area marked with a light fill, then a dot at every hole (lined up with the stitches)
+function drawPage(ctx, w, h, cell, ox, oy, dpr, mark = true) {
+  const L = look();
+  ctx.fillStyle = L.page; ctx.fillRect(0, 0, w, h);
+  Stitch.drawTexture(ctx, state.texture, state.fabric, w, h, dpr);
+  let step = cell; while (step < 9 * dpr) step *= 2;
+  for (const [col, every, r] of [[L.dot, 1, 1.15], [L.big, 10, 1.7]]) {
+    const st = step * every, p = new Path2D(), rr = r * dpr;
+    for (let y = ((oy % st) + st) % st; y <= h; y += st) for (let x = ((ox % st) + st) % st; x <= w; x += st) { p.moveTo(x + rr, y); p.arc(x, y, rr, 0, TAU); }
+    ctx.fillStyle = col; ctx.fill(p);
+  }
+  // inside the piece's shape: real Aida cloth, laid on the dot paper, its holes exactly where the stitches go
+  if (mark) {
+    const shape = shapePath(cell, ox, oy), { cols, rows } = pattern, pad = cell * 1.2;
+    ctx.save(); ctx.shadowColor = 'rgba(40,28,16,.16)'; ctx.shadowBlur = 14 * dpr; ctx.shadowOffsetY = 3 * dpr;
+    ctx.fillStyle = L.page; ctx.fill(shape); ctx.restore();
+    ctx.save(); ctx.clip(shape);
+    Stitch.drawAida(ctx, L, cell, ox, oy, ox - pad, oy - pad, ox + cols * cell + pad, oy + rows * cell + pad);
+    Stitch.drawTexture(ctx, state.texture, state.fabric, w, h, dpr);
+    ctx.restore();
+  }
+}
+
+// ---------- layout ----------
+const cv = $('#page'), ctx = cv.getContext('2d');
+let view = 'stitched';
+const chartView = { zoom: 1, px: 0, py: 0 };   // chart zoom and pan, in css px
+let layout = null;   // where the piece is: { cell (css), ox, oy (css) }
+const skeinsFor = n => n / (1700 * state.count / 14);   // a skein does roughly 1,700 stitches on 14-count, two strands
+const inches = n => n / state.count;
+const narrow = () => innerWidth <= 760;
+
+// the free area of the page, around the corners and any open panel
+function area() {
+  const W = innerWidth, H = innerHeight;
+  let l = 30, r = 30, t = 86, b = view === 'chart' ? 150 : 96;
+  if (document.documentElement.classList.contains('og')) return { x: 600, y: 30, w: W - 640, h: H - 60 };   // link-preview card: the piece on the right
+  if (narrow()) {
+    const sheet = [...document.querySelectorAll('.panel')].find(p => !p.hidden);
+    if (sheet) b = Math.max(b, sheet.getBoundingClientRect().height + 110);
+  } else {
+    if (!$('#edit').hidden) r = 340 + 40;
+    if (!$('#threads').hidden) l = 320 + 40;
+  }
+  return { x: l, y: t, w: Math.max(80, W - l - r), h: Math.max(80, H - t - b) };
+}
+
+function render() {
+  if (!pattern) return;
+  const { cols, rows } = pattern, dpr = Math.min(devicePixelRatio || 1, 2);
+  const W = innerWidth, H = innerHeight, A = area();
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+  const fit = Math.min(A.w / cols, A.h / rows);
+  let cell, ox, oy;
+  if (view === 'stitched') {
+    cell = Math.max(2, Math.min(fit * .82, 20));
+    ox = Math.round(A.x + (A.w - cols * cell) / 2); oy = Math.round(A.y + (A.h - rows * cell) / 2);
+  } else {
+    cell = Math.max(1, fit * chartView.zoom);
+    ox = A.x + (A.w - cols * cell) / 2 + chartView.px; oy = A.y + (A.h - rows * cell) / 2 + chartView.py;
+  }
+  layout = { cell, ox, oy };
+  const c = cell * dpr, x0 = ox * dpr, y0 = oy * dpr;
+  drawPage(ctx, cv.width, cv.height, c, x0, y0, dpr, view === 'stitched');
+  if (view === 'stitched') {
+    drawStitched(ctx, c, x0, y0);
+    if (snap.x || snap.y) {   // a red guide through the middle while the picture is snapped there
+      ctx.save(); ctx.strokeStyle = '#a4462e'; ctx.lineWidth = 1.5 * dpr; ctx.setLineDash([6 * dpr, 5 * dpr]);
+      const mx = x0 + cols * c / 2, my = y0 + rows * c / 2, e = 18 * dpr;
+      ctx.beginPath();
+      if (snap.x) { ctx.moveTo(mx, y0 - e); ctx.lineTo(mx, y0 + rows * c + e); }
+      if (snap.y) { ctx.moveTo(x0 - e, my); ctx.lineTo(x0 + cols * c + e, my); }
+      ctx.stroke(); ctx.restore();
+    }
+  }
+  else { const mg = 26 * dpr; ctx.save(); ctx.translate(x0 - mg, y0 - mg); drawChart(ctx, c, 0, 0, cols, rows, state.chartMode, mg, { paper: false, u: dpr, label: look().on }); ctx.restore(); }
+
+  // the label under the piece, like a card beside the work
+  const { threads } = pattern, total = threads.reduce((s, t) => s + t.count, 0), w = inches(cols), h = inches(rows);
+  const lab = $('#label');
+  if (document.documentElement.classList.contains('og')) lab.innerHTML = 'Cross-stitch patterns from any picture';
+  else lab.innerHTML = view === 'stitched'
+    ? `<span><b>${w.toFixed(1)} × ${h.toFixed(1)} in</b> on ${state.count}-count Aida · <b>${threads.length}</b> ${threads.length === 1 ? 'color' : 'colors'}<span class="long"> · ${cols} × ${rows} stitches · ${total.toLocaleString()} crosses</span></span>`
+    : `<span><b>${cols} × ${rows}</b> stitches<span class="long"> · bold lines every 10 · red arrows mark the center</span></span>`;
+  cv.classList.toggle('can-grab', view === 'chart');
+  renderKey();
+}
+function renderKey() {
+  const { threads, cols, rows } = pattern, w = inches(cols), h = inches(rows);
+  const key = $('#key');
+  key.innerHTML = '<tr><th></th><th>DMC</th><th>Color</th><th style="text-align:right">Stitches</th><th style="text-align:right">Skeins</th></tr>';
+  for (const t of threads) {
+    const ink = luma(t.floss.hex) > .55 ? '#2a211b' : '#fff';
+    key.insertAdjacentHTML('beforeend', `<tr><td><span class="sw" style="background:${t.floss.hex};color:${ink}">${t.symbol}</span></td><td class="dmc">${t.floss.num}</td><td>${t.floss.name}</td><td class="num">${t.count.toLocaleString()}</td><td class="num">${Math.max(1, Math.ceil(skeinsFor(t.count)))}</td></tr>`);
+  }
+  $('#needs').textContent = `You will need: ${state.count}-count ${fabricOf().label.toLowerCase()} Aida, at least ${Math.ceil(w + 6)} × ${Math.ceil(h + 6)} in (3 in spare on every side) · a size ${state.count >= 18 ? 26 : 24} tapestry needle · ${threads.length} colors of DMC floss, stitched with two strands. Skein counts are estimates.`;
+}
+
+let queued = false;
+function update() {
+  if (!state.src || queued) return;
+  queued = true;
+  requestAnimationFrame(() => { queued = false; makePattern(); render(); });
+}
+
+// ---------- outputs ----------
+function stitchedImage(cellPx) {
+  const pad = cellPx * 4, { cols, rows } = pattern;
+  const c = document.createElement('canvas'); c.width = cols * cellPx + pad * 2; c.height = rows * cellPx + pad * 2;
+  const g = c.getContext('2d');
+  drawFabric(g, cellPx, 0, 0, cols + 8, rows + 8);   // on a slightly bigger piece of Aida, as in real life
+  drawStitched(g, cellPx, pad, pad);
+  return c;
+}
+const saveBtn = $('#save'), saveMenu = $('#saveMenu');
+const closeMenu = () => { saveMenu.hidden = true; saveBtn.setAttribute('aria-expanded', 'false'); };
+saveBtn.addEventListener('click', e => { e.stopPropagation(); if (saveMenu.hidden && !$('#edit').hidden) $('#editBtn').click(); saveMenu.hidden = !saveMenu.hidden; saveBtn.setAttribute('aria-expanded', String(!saveMenu.hidden)); });
+addEventListener('click', e => { if (!saveMenu.hidden && !e.target.closest('.menu-wrap')) closeMenu(); });
+$('#savePic').addEventListener('click', () => {
+  closeMenu();
+  stitchedImage(Math.max(12, Math.round(2400 / Math.max(pattern.cols, pattern.rows)))).toBlob(b => {
+    const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'cross-stitch.png'; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  });
+});
+// the pattern as a PDF: a cover with the picture, threads and supplies, then the whole chart on one page,
+// sized to fit the chart rather than a sheet of paper, so it can be printed, tiled or read on a screen
+let jsPDFReady = null;
+const loadJsPDF = () => jsPDFReady || (jsPDFReady = new Promise((res, rej) => {
+  const sc = document.createElement('script');
+  sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+  sc.onload = () => res(window.jspdf.jsPDF); sc.onerror = () => { jsPDFReady = null; rej(new Error('Could not load the PDF maker')); };
+  document.head.appendChild(sc);
+}));
+// the site's own fonts, embedded in the PDF (Literata for headings, Hanken Grotesk for text; both SIL Open Font License)
+let pdfFonts = null;
+const loadPdfFonts = () => pdfFonts || (pdfFonts = Promise.all([
+  ['Literata-Medium.ttf', 'Literata', 'normal'], ['Literata-MediumItalic.ttf', 'Literata', 'italic'],
+  ['HankenGrotesk-Regular.ttf', 'Hanken', 'normal'], ['HankenGrotesk-SemiBold.ttf', 'Hanken', 'bold'],
+].map(async ([file, name, style]) => {
+  const buf = new Uint8Array(await (await fetch('fonts/' + file)).arrayBuffer());
+  let bin = ''; for (let i = 0; i < buf.length; i += 32768) bin += String.fromCharCode.apply(null, buf.subarray(i, i + 32768));
+  return [file, btoa(bin), name, style];
+})).catch(e => { pdfFonts = null; throw e; }));
+function swatchPng(t) {
+  const c = document.createElement('canvas'); c.width = c.height = 64;
+  const g = c.getContext('2d');
+  g.fillStyle = t.floss.hex; g.beginPath(); g.roundRect(2, 2, 60, 60, 14); g.fill();
+  g.strokeStyle = 'rgba(0,0,0,.18)'; g.lineWidth = 2; g.stroke();
+  g.fillStyle = luma(t.floss.hex) > .55 ? '#2a211b' : '#ffffff';
+  g.font = '38px system-ui, "Apple Symbols", "Segoe UI Symbol", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText(t.symbol, 32, 34);
+  return c.toDataURL('image/png');
+}
+$('#savePat').addEventListener('click', async () => {
+  closeMenu();
+  const label = saveBtn.querySelector('.txt'), was = label.textContent;
+  label.textContent = 'Making…'; saveBtn.disabled = true;
+  try {
+    const jsPDF = await loadJsPDF();
+    const { cols, rows, threads } = pattern, w = inches(cols), h = inches(rows);
+    const green = [43, 38, 32], ink = [43, 38, 32], muted = [132, 122, 108];
+    // cover
+    const PW = 540, M = 40, picW = PW - M * 2, pic = stitchedImage(Math.max(8, Math.round(1600 / Math.max(cols, rows))));
+    const picH = picW * pic.height / pic.width, rowH = 26;
+    const coverH = M + 70 + picH + 24 + 20 + threads.length * rowH + 80;
+    const doc = new jsPDF({ unit: 'pt', format: [PW, coverH], compress: true });
+    for (const [file, data, name, style] of await loadPdfFonts()) { doc.addFileToVFS(file, data); doc.addFont(file, name, style); }
+    doc.setFont('Literata', 'normal'); doc.setFontSize(26); doc.setTextColor(...green);
+    doc.text('Cross-Stitch Pattern', M, M + 18);
+    doc.setFont('Hanken', 'normal'); doc.setFontSize(9); doc.setTextColor(...muted); doc.text('made with Sampler', PW - M, M + 18, { align: 'right' });
+    doc.setFont('Hanken', 'normal'); doc.setFontSize(10); doc.setTextColor(...muted);
+    doc.text(`${cols} × ${rows} stitches  ·  ${state.count}-count ${fabricOf().label.toLowerCase()} Aida  ·  finished ${w.toFixed(1)} × ${h.toFixed(1)} in (${(w * 2.54).toFixed(1)} × ${(h * 2.54).toFixed(1)} cm)  ·  ${threads.length} colors`, M, M + 40);
+    doc.addImage(pic.toDataURL('image/jpeg', .92), 'JPEG', M, M + 58, picW, picH);
+    let y = M + 58 + picH + 30;
+    doc.setFont('Hanken', 'bold'); doc.setFontSize(9); doc.setTextColor(...green);
+    doc.text('DMC', M + 30, y); doc.text('COLOR', M + 80, y); doc.text('STITCHES', PW - M - 70, y, { align: 'right' }); doc.text('SKEINS', PW - M, y, { align: 'right' });
+    y += 10;
+    doc.setFontSize(10.5);
+    for (const t of threads) {
+      doc.addImage(swatchPng(t), 'PNG', M, y, 20, 20);
+      doc.setFont('Hanken', 'bold'); doc.setTextColor(...ink); doc.text(String(t.floss.num), M + 30, y + 14);
+      doc.setFont('Hanken', 'normal'); doc.text(t.floss.name, M + 80, y + 14);
+      doc.text(t.count.toLocaleString(), PW - M - 70, y + 14, { align: 'right' });
+      doc.text(String(Math.max(1, Math.ceil(skeinsFor(t.count)))), PW - M, y + 14, { align: 'right' });
+      y += rowH;
+    }
+    doc.setFontSize(9); doc.setTextColor(...muted);
+    doc.text(doc.splitTextToSize($('#needs').textContent, PW - M * 2), M, y + 18);
+    // the chart, whole, at a tenth of an inch per square
+    const px = 24, mg = 44, cc = document.createElement('canvas');
+    cc.width = cols * px + mg * 2; cc.height = rows * px + mg * 2;
+    drawChart(cc.getContext('2d'), px, 0, 0, cols, rows, state.chartMode, mg);
+    const sq = 7.2, CW = cc.width * sq / px, CH = cc.height * sq / px, head = 36;
+    doc.addPage([CW + 48, CH + 48 + head], CW > CH ? 'l' : 'p');
+    doc.setFont('Literata', 'italic'); doc.setFontSize(15); doc.setTextColor(164, 70, 46);
+    doc.text('Chart', 24, 32);
+    doc.setFont('Hanken', 'normal'); doc.setFontSize(9); doc.setTextColor(...muted);
+    doc.text(`${cols} × ${rows}  ·  bold lines every 10 stitches  ·  red arrows mark the center`, 70, 32);
+    doc.addImage(cc.toDataURL('image/png'), 'PNG', 24, 24 + head, CW, CH, undefined, 'FAST');
+    doc.save('cross-stitch-pattern.pdf');
+  } catch (e) {
+    alert(e.message);
+  } finally { label.textContent = was; saveBtn.disabled = false; }
+});
+
+// ---------- controls ----------
+function chipGroup(host, items, key, render = it => it.label, cls = 'chip', after) {
+  host.innerHTML = '';
+  const btns = items.map(it => {
+    const b = document.createElement('button');
+    b.type = 'button'; if (cls) b.className = cls; b.innerHTML = render(it);
+    b.addEventListener('click', () => { state[key] = it.id; paint(); after?.(); update(); });
+    host.appendChild(b); return [b, it];
+  });
+  const paint = () => btns.forEach(([b, it]) => b.setAttribute('aria-pressed', String(state[key] === it.id)));
+  paint();
+}
+chipGroup($('#shapes'), SHAPES, 'shape', s => `<svg data-rough="0.6" viewBox="0 0 16 16" fill="currentColor">${s.icon}</svg>${s.label}`);
+chipGroup($('#fabrics'), FABRICS, 'fabric', f => `<span class="sw" style="background:${PAGE[f.id].page}"></span>${f.label}`, 'chip', applyLook);
+chipGroup($('#counts'), [14, 16, 18].map(n => ({ id: n, label: String(n) })), 'count', it => it.label, '');
+chipGroup($('#chartModes'), [{ id: 'colour', label: 'Color' }, { id: 'symbols', label: 'Symbols' }], 'chartMode', it => it.label, '');
+
+// the view switch: the same piece, front (stitched) or back (chart)
+const viewBtns = [['stitched', 'Stitched'], ['chart', 'Chart']].map(([id, label]) => {
+  const b = document.createElement('button'); b.type = 'button'; b.textContent = label;
+  b.addEventListener('click', () => setView(id));
+  $('#views').appendChild(b); return [b, id];
+});
+function setView(v) {
+  if (v === view) return;
+  viewBtns.forEach(([b, id]) => b.setAttribute('aria-pressed', String(id === v)));
+  cv.classList.add('fading');
+  setTimeout(() => {
+    view = v; document.body.classList.toggle('chart', v === 'chart');
+    $('#threads').hidden = v !== 'chart' || (narrow() && !$('#edit').hidden);
+    chartView.zoom = 1; chartView.px = chartView.py = 0;
+    render(); cv.classList.remove('fading');
+  }, 160);
+}
+viewBtns.forEach(([b, id]) => b.setAttribute('aria-pressed', String(id === view)));
+
+const slider = (id, key, fmt) => {
+  const el = $('#' + id), out = $('#' + id + 'Out');
+  el.value = state[key]; out.textContent = fmt(state[key]);
+  el.addEventListener('input', () => { state[key] = +el.value; out.textContent = fmt(state[key]); update(); });
+  return el;
+};
+const zoomEl = slider('zoom', 'zoom', v => v.toFixed(1) + '×');
+const setPicZoom = z => { state.zoom = clamp(z, 1, 8); zoomEl.value = state.zoom; $('#zoomOut').textContent = state.zoom.toFixed(1) + '×'; update(); };
+slider('cols', 'cols', v => v);
+slider('colors', 'colors', v => v);
+slider('tidy', 'tidy', v => ['off', 'lone stitches', 'lone + pairs'][v]);
+$('#bare').addEventListener('change', e => { state.bare = e.target.checked; update(); });
+
+const about = $('#about'), aboutBtn = $('#aboutBtn');
+// the hint under the title stays until the title is hovered (or opened)
+const hideTip = () => { $('#tip').classList.add('gone'); try { localStorage.setItem('sampler-tip-seen', '1'); } catch (e) {} };
+try { if (localStorage.getItem('sampler-tip-seen')) $('#tip').hidden = true; } catch (e) {}
+aboutBtn.addEventListener('pointerenter', hideTip); aboutBtn.addEventListener('focus', hideTip); aboutBtn.addEventListener('click', hideTip);
+const setAbout = open => { about.hidden = !open; aboutBtn.setAttribute('aria-expanded', String(open)); };
+aboutBtn.addEventListener('click', e => { e.stopPropagation(); const open = about.hidden; if (open) { closeMenu(); if (!$('#edit').hidden) $('#editBtn').click(); } setAbout(open); });
+addEventListener('click', e => { if (!about.hidden && !e.target.closest('#about, #aboutBtn')) setAbout(false); });
+$('#editBtn').addEventListener('click', () => {
+  setAbout(false);
+  closeMenu();
+  const open = $('#edit').hidden;
+  $('#edit').hidden = !open; $('#editBtn').setAttribute('aria-pressed', String(open));
+  if (narrow()) $('#threads').hidden = open || view !== 'chart';   // one sheet at a time on phones
+  render();
+});
+$('#pick').addEventListener('click', () => $('#file').click());
+$('#file').addEventListener('change', e => { loadFile(e.target.files[0]); setCredit(null); });
+$('#sample').addEventListener('click', samplePicture);
+addEventListener('paste', e => { const f = [...(e.clipboardData?.files || [])].find(f => f.type.startsWith('image/')); if (f) loadFile(f); });
+addEventListener('dragover', e => { e.preventDefault(); document.body.classList.add('dragover'); });
+addEventListener('dragleave', e => { if (!e.relatedTarget) document.body.classList.remove('dragover'); });
+addEventListener('drop', e => { e.preventDefault(); document.body.classList.remove('dragover'); loadFile(e.dataTransfer.files[0]); });
+addEventListener('keydown', e => {
+  if (e.target.matches?.('input, textarea')) return;
+  if (e.metaKey || e.ctrlKey || e.altKey) return;   // leave copy, paste and browser shortcuts alone
+  if (e.key === 'Escape') { closeMenu(); setAbout(false); if (!$('#edit').hidden) $('#editBtn').click(); }
+  if (e.key === 'e' || e.key === 'E') $('#editBtn').click();
+  if (e.key === 'c' || e.key === 'C') setView(view === 'chart' ? 'stitched' : 'chart');
+});
+
+// ---------- touching the piece ----------
+// stitched view: drag the piece to move the picture inside the shape; scroll or pinch to zoom the picture
+// chart view: drag anywhere to pan; scroll to pan, pinch or ctrl-scroll to zoom
+const onPiece = (x, y) => layout && x >= layout.ox && y >= layout.oy && x <= layout.ox + pattern.cols * layout.cell && y <= layout.oy + pattern.rows * layout.cell;
+function zoomChartAt(f, x, y) {
+  const A = area(), z = clamp(chartView.zoom * f, .5, 12), k = z / chartView.zoom;
+  const cx = A.x + A.w / 2 + chartView.px, cy = A.y + A.h / 2 + chartView.py;   // centre of the chart now
+  chartView.px += (x - cx) * (1 - k); chartView.py += (y - cy) * (1 - k);
+  chartView.zoom = z; render();
+}
+const pointers = new Map(), snap = { x: false, y: false };
+let drag = null, pinch = null;
+cv.addEventListener('pointerdown', e => {
+  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (pointers.size === 2) {
+    const [a, b] = [...pointers.values()];
+    pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), zoom: view === 'chart' ? chartView.zoom : state.zoom }; drag = null; return;
+  }
+  if (view === 'stitched' && !onPiece(e.clientX, e.clientY)) return;
+  cv.setPointerCapture(e.pointerId); cv.classList.add('grabbing');
+  drag = { x: e.clientX, y: e.clientY, cx: state.cx, cy: state.cy };
+});
+cv.addEventListener('pointermove', e => {
+  if (pointers.has(e.pointerId)) pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (pinch && pointers.size === 2) {
+    const [a, b] = [...pointers.values()], f = Math.hypot(a.x - b.x, a.y - b.y) / pinch.d;
+    if (view === 'chart') zoomChartAt(pinch.zoom * f / chartView.zoom, (a.x + b.x) / 2, (a.y + b.y) / 2); else setPicZoom(pinch.zoom * f);
+    return;
+  }
+  if (!drag) { if (view === 'stitched') cv.classList.toggle('can-grab', onPiece(e.clientX, e.clientY)); return; }
+  const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+  drag.x = e.clientX; drag.y = e.clientY;
+  if (view === 'chart') { chartView.px += dx; chartView.py += dy; render(); return; }
+  // follow the finger, but snap the picture's middle to the piece's middle when it comes close (within ~10 screen px)
+  const r = cropRect(pattern.cols, pattern.rows), k = r.w / (pattern.cols * layout.cell);
+  drag.cx -= dx * k / state.src.width; drag.cy -= dy * k / state.src.height;
+  const tx = 10 * k / state.src.width, ty = 10 * k / state.src.height;
+  snap.x = Math.abs(drag.cx - .5) < tx; snap.y = Math.abs(drag.cy - .5) < ty;
+  state.cx = snap.x ? .5 : drag.cx; state.cy = snap.y ? .5 : drag.cy;
+  update();
+});
+const endPointer = e => { pointers.delete(e.pointerId); if (pointers.size < 2) pinch = null; if (!pointers.size) { drag = null; snap.x = snap.y = false; cv.classList.remove('grabbing'); render(); } };
+cv.addEventListener('pointerup', endPointer); cv.addEventListener('pointercancel', endPointer);
+cv.addEventListener('wheel', e => {
+  e.preventDefault();
+  if (view === 'stitched') { setPicZoom(state.zoom * Math.exp(-e.deltaY * .0015)); return; }
+  if (e.ctrlKey || e.metaKey) zoomChartAt(Math.exp(-e.deltaY * .01), e.clientX, e.clientY);
+  else { chartView.px -= e.deltaX; chartView.py -= e.deltaY; render(); }
+}, { passive: false });
+$('#zoomInBtn').addEventListener('click', () => zoomChartAt(1.4, innerWidth / 2, innerHeight / 2));
+$('#zoomOutBtn').addEventListener('click', () => zoomChartAt(1 / 1.4, innerWidth / 2, innerHeight / 2));
+$('#zoomFit').addEventListener('click', () => { chartView.zoom = 1; chartView.px = chartView.py = 0; render(); });
+
+addEventListener('resize', render);
+applyLook();
+Stitch.roughen();
+samplePicture();
+document.fonts?.ready.then(() => { render(); Stitch.opticalCenter($('#aboutBtn .tt')); });
+})();
+</script>
+</body>
+</html>
