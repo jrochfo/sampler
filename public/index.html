@@ -16,7 +16,7 @@
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="stylesheet" href="kit.css?v=1791948662">
+<link rel="stylesheet" href="kit.css?v=1791994687">
 </head>
 <body>
 <canvas id="page" role="img" aria-label="Your picture, stitched"></canvas>
@@ -710,10 +710,27 @@ function area() {
   return { x: l, y: t, w: Math.max(80, W - l - r), h: Math.max(80, H - t - b) };
 }
 
+// the free area as drawn: it glides to a new spot when a panel opens or closes, and snaps on resize or view change
+let shownA = null, glide = null, glideFrame = 0, snapArea = false;
+const calm = matchMedia('(prefers-reduced-motion: reduce)');
+const sameArea = (a, b) => ['x', 'y', 'w', 'h'].every(k => Math.abs(a[k] - b[k]) < .5);
+function drawnArea() {
+  const T = area();
+  if (!shownA || snapArea || calm.matches) { snapArea = false; glide = null; return shownA = T; }
+  if (!sameArea(glide ? glide.to : shownA, T)) glide = { from: shownA, to: T, t0: performance.now() };
+  if (!glide) return shownA;
+  const k = Math.min(1, (performance.now() - glide.t0) / 420), e = 1 - Math.pow(1 - k, 3);
+  const { from, to } = glide;
+  shownA = { x: from.x + (to.x - from.x) * e, y: from.y + (to.y - from.y) * e, w: from.w + (to.w - from.w) * e, h: from.h + (to.h - from.h) * e };
+  if (k < 1) { if (!glideFrame) glideFrame = requestAnimationFrame(() => { glideFrame = 0; render(); }); }
+  else glide = null;
+  return shownA;
+}
+
 function render() {
   if (!pattern) return;
   const { cols, rows } = pattern, dpr = Math.min(devicePixelRatio || 1, 2);
-  const W = innerWidth, H = innerHeight, A = area();
+  const W = innerWidth, H = innerHeight, A = drawnArea();
   cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
   ctx.setTransform(1, 0, 0, 1, 0, 0);
 
@@ -902,7 +919,7 @@ function setView(v) {
     view = v; document.body.classList.toggle('chart', v === 'chart');
     $('#threads').hidden = v !== 'chart' || (narrow() && !$('#edit').hidden);
     chartView.zoom = 1; chartView.px = chartView.py = 0;
-    render(); cv.classList.remove('fading');
+    snapArea = true; render(); cv.classList.remove('fading');
   }, 160);
 }
 viewBtns.forEach(([b, id]) => b.setAttribute('aria-pressed', String(id === view)));
@@ -1004,7 +1021,7 @@ $('#zoomInBtn').addEventListener('click', () => zoomChartAt(1.4, innerWidth / 2,
 $('#zoomOutBtn').addEventListener('click', () => zoomChartAt(1 / 1.4, innerWidth / 2, innerHeight / 2));
 $('#zoomFit').addEventListener('click', () => { chartView.zoom = 1; chartView.px = chartView.py = 0; render(); });
 
-addEventListener('resize', render);
+addEventListener('resize', () => { snapArea = true; render(); });
 applyLook();
 Stitch.roughen();
 samplePicture();
